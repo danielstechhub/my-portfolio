@@ -1,0 +1,56 @@
+# =============================================================================
+# .htaccess — Apache configuration
+# =============================================================================
+
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive files from direct access
+<FilesMatch "\.(env|log|sql|md)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS in production (harmless on local XAMPP over HTTP)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Remove trailing slashes
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)/$ /$1 [L,R=301]
+</IfModule>
+
+# Deny access to storage/ and includes/ directly over HTTP
+<IfModule mod_authz_core.c>
+  RewriteRule ^storage/ - [F,L]
+  RewriteRule ^includes/ - [F,L]
+  RewriteRule ^components/ - [F,L]
+  RewriteRule ^database/ - [F,L]
+</IfModule>
+
+# Security headers (belt-and-braces alongside apply_security_headers() in PHP)
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "DENY"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Browser caching for static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+# GZIP compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Custom error pages fall back to default index if not present
+ErrorDocument 404 /index.php
